@@ -45,7 +45,7 @@ class Bus(Transport):
 
     def fuel_consumption(self, distance: int) -> float:
         if self.passengers > self.capacity:
-            print(f"⚠️ {self.name}: Перевантажено! (Пасажирів: {self.passengers}, Місць: {self.capacity})")
+            print(f" {self.name}: Перевантажено! (Пасажирів: {self.passengers}, Місць: {self.capacity})")
             return 0.0
         
         return distance * self.fuel_rate
