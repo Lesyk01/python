@@ -1,78 +1,68 @@
 import pytest
+from service_body_test import Order  
 
-class OrderManager:
-    def __init__(self, items):
-        self.items = items
 
-    def total(self):
-        return sum(item['price'] for item in self.items)
+@pytest.fixture
+def sample_items():
+    return [
+        {'name': 'Laptop', 'price': 1000, 'quantity': 1},
+        {'name': 'Mouse', 'price': 50, 'quantity': 2},
+        {'name': 'Keyboard', 'price': 100, 'quantity': 1}
+    ]
 
-    def most_expensive(self):
-        if not self.items:
-            return None
-        return max(self.items, key=lambda x: x['price'])
+@pytest.fixture
+def order(sample_items):
+    return Order(id=1, items=sample_items)
 
-    def apply_discount(self, percent):
-        if not 0 <= percent <= 100:
-            raise ValueError("Discount must be between 0 and 100")
-        factor = 1 - (percent / 100)
-        for item in self.items:
-            item['price'] *= factor
 
-    def __repr__(self):
-        return f"OrderManager(items={len(self.items)})"
 
-def test_total_calculation():
-    items = [{'name': 'A', 'price': 100}, {'name': 'B', 'price': 50}]
-    manager = OrderManager(items)
-    assert manager.total() == 150
+def test_init(order, sample_items):
+    assert order.id == 1
+    assert order.items == sample_items
+
+def test_total_calculation(order):
+    assert order.total() == 1200
 
 def test_total_empty():
-    manager = OrderManager([])
-    assert manager.total() == 0
+    empty_order = Order(id=2, items=[])
+    assert empty_order.total() == 0
 
-def test_most_expensive():
-    items = [{'name': 'A', 'price': 10}, {'name': 'B', 'price': 100}, {'name': 'C', 'price': 50}]
-    manager = OrderManager(items)
-    result = manager.most_expensive()
-    assert result['name'] == 'B'
-    assert result['price'] == 100
+def test_most_expensive(order):
+    expensive = order.most_expensive()
+    assert expensive['name'] == 'Laptop'
+    assert expensive['price'] == 1000
 
-def test_most_expensive_empty():
-    manager = OrderManager([])
-    assert manager.most_expensive() is None
+def test_apply_discount_valid(order):
+    order.apply_discount(10)
 
-def test_apply_discount_valid():
-    items = [{'name': 'A', 'price': 100}, {'name': 'B', 'price': 200}]
-    manager = OrderManager(items)
-    manager.apply_discount(10)
-    assert manager.items[0]['price'] == 90.0
-    assert manager.items[1]['price'] == 180.0
-    assert manager.total() == 270.0
+    assert order.items[0]['price'] == 900.0
+    assert order.items[1]['price'] == 45.0
+    assert order.items[2]['price'] == 90.0
+    
 
-def test_apply_discount_zero():
-    items = [{'name': 'A', 'price': 100}]
-    manager = OrderManager(items)
-    manager.apply_discount(0)
-    assert manager.items[0]['price'] == 100
+    assert order.total() == 1080
 
-def test_apply_discount_full():
-    items = [{'name': 'A', 'price': 100}]
-    manager = OrderManager(items)
-    manager.apply_discount(100)
-    assert manager.items[0]['price'] == 0
+def test_apply_discount_zero(order):
+    order.apply_discount(0)
+    assert order.items[0]['price'] == 1000
 
-def test_apply_discount_invalid_negative():
-    manager = OrderManager([{'name': 'A', 'price': 100}])
-    with pytest.raises(ValueError):
-        manager.apply_discount(-10)
+def test_apply_discount_full(order):
+    order.apply_discount(100)
+    assert order.items[0]['price'] == 0
+    assert order.total() == 0
 
-def test_apply_discount_invalid_huge():
-    manager = OrderManager([{'name': 'A', 'price': 100}])
-    with pytest.raises(ValueError):
-        manager.apply_discount(150)
+def test_apply_discount_invalid_negative(order):
+    with pytest.raises(ValueError, match="Invalid discount"):
+        order.apply_discount(-1)
 
-def test_repr():
-    items = [{'name': 'A', 'price': 10}, {'name': 'B', 'price': 20}]
-    manager = OrderManager(items)
-    assert repr(manager) == "OrderManager(items=2)"
+def test_apply_discount_invalid_huge(order):
+    with pytest.raises(ValueError, match="Invalid discount"):
+        order.apply_discount(101)
+
+def test_repr(order):
+    assert repr(order) == "<Order 1: 3 items>"
+
+def test_most_expensive_fail_on_empty():
+    empty_order = Order(id=99, items=[])
+    with pytest.raises(ValueError): 
+        empty_order.most_expensive()
