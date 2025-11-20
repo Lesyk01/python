@@ -8,6 +8,6 @@ def midicines(meds):
 meds = [
     Antibiotic('Nurofen', 10, 15.3),
     Vitamin('Ascorbic acid', 120, 135.3),
-    Vaccine('flu vaccine', 10, 10.0)
+    Vaccine('120', 10, 10.0)
 ]
 midicines(meds)
